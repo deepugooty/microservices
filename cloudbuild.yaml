@@ -12,28 +12,23 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# This configuration file is used to build and deploy the app into a
-# GKE cluster using Google Cloud Build.
-#
-# PREREQUISITES:
-# - Cloud Build service account must have role: "Kubernetes Engine Developer"
-
-# USAGE:
-# GCP zone and GKE target cluster must be specified as substitutions
-# Example invocation:
-# `gcloud builds submit --config=cloudbuild.yaml --substitutions=_ZONE=us-central1-b,_CLUSTER=demo-app-staging .`
-
+# This sample build has exactly one step: build a new container image using this
+# repository as source. Here we use the 'docker' image to build the image and
+# tag it with the name of the image.
 steps:
-- id: 'Deploy application to cluster'
-  name: 'gcr.io/k8s-skaffold/skaffold:v0.20.0'
-  entrypoint: 'bash'
-  args:
-  - '-c'
-  - >
-    gcloud container clusters get-credentials --zone=$_ZONE $_CLUSTER;
-    skaffold run -f=skaffold.yaml --default-repo=gcr.io/$PROJECT_ID;
+- name: 'docker'
+  args: [ 'build', '-t', 'gcr.io/$PROJECT_ID/helloworld-image', '.' ]
 
-# Add more power, and more time, for heavy Skaffold build
-timeout: '3600s'
-options:
-  machineType: 'N1_HIGHCPU_8'
+# By default, all built docker images will be lost once the build is complete.
+# Rather than writing a build step to push this image, you can simply list the
+# image below and it will automatically be uploaded to Google Cloud Container
+# Registry.
+images:
+- 'gcr.io/$PROJECT_ID/helloworld-image'
+
+# You can organize your builds with tags
+tags: ['gcp-cloud-build-sample-build']
+
+# You can configure more options than the ones listed here. Visit
+# https://cloud.google.com/cloud-build/docs/build-config to see the full list of
+# available options.
